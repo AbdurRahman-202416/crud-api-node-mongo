@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
-
-const apiUrl = 'https://crud-api-node-mongo.vercel.app/api/todos'
+import apiCall from '../Axios'
+import { notifyError, notifySuccess } from './Toster'
 
 const TodoList = () => {
   const [todos, setTodos] = useState([])
@@ -14,36 +13,25 @@ const TodoList = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [currentTodo, setCurrentTodo] = useState(null)
 
-  // Fetch todos on mount
   useEffect(() => {
     fetchTodos()
   }, [])
 
-  // Fetch all todos from the API
   const fetchTodos = async () => {
     try {
-      const response = await axios.get(apiUrl)
-      if (Array.isArray(response.data.data)) {
-        setTodos(response.data.data)
-      } else {
-        setTodos([])
-      }
+      const response = await apiCall.get('/api/todos')
+      setTodos(Array.isArray(response.data.data) ? response.data.data : [])
     } catch (error) {
       console.error('Error fetching todos:', error)
       setTodos([])
     }
   }
 
-  // Add new task
   const handleAddTodo = async e => {
     e.preventDefault()
     try {
-      await axios.post(apiUrl, {
-        text: newTodo.text,
-        priority: newTodo.priority,
-        deadline: newTodo.deadline,
-        complete: false
-      })
+      await apiCall.post('/api/todos', { ...newTodo, complete: false })
+      notifySuccess('Task added successfully')
       fetchTodos()
       setNewTodo({ text: '', priority: 'high', deadline: '' })
     } catch (error) {
@@ -51,93 +39,191 @@ const TodoList = () => {
     }
   }
 
-  // Toggle task completion status
   const handleToggleComplete = async (id, currentStatus) => {
     try {
-      await axios.patch(`${apiUrl}/${id}`, { complete: !currentStatus })
+      await apiCall.patch(`/api/todos/${id}`, { complete: !currentStatus })
       fetchTodos()
     } catch (error) {
       console.error('Error toggling task completion:', error)
     }
   }
 
-  // Open Edit Modal
-  const openEditModal = todo => {
-    setCurrentTodo(todo)
-    setEditModalOpen(true)
-  }
-
-  // Close Edit Modal
-  const closeEditModal = () => {
-    setCurrentTodo(null)
-    setEditModalOpen(false)
-  }
-
-  // Update Task
-  const handleUpdateTodo = async e => {
-    e.preventDefault()
+  const handleEditTodo = async () => {
     try {
-      await axios.patch(`${apiUrl}/${currentTodo._id}`, {
+      setEditModalOpen(false)
+      await apiCall.patch(`/api/todos/${currentTodo._id}`, {
         text: currentTodo.text,
         priority: currentTodo.priority,
-        deadline: currentTodo.deadline,
-        complete: currentTodo.complete
+        deadline: currentTodo.deadline
       })
+      notifySuccess('Task updated successfully')
       fetchTodos()
-      closeEditModal()
     } catch (error) {
-      console.error('Error updating task:', error)
+      console.error('Error editing task:', error)
     }
   }
 
-  // Open Delete Modal
-  const openDeleteModal = todo => {
-    setCurrentTodo(todo)
-    setDeleteModalOpen(true)
-  }
-
-  // Close Delete Modal
-  const closeDeleteModal = () => {
-    setCurrentTodo(null)
-    setDeleteModalOpen(false)
-  }
-
-  // Delete Task
   const handleDeleteTodo = async () => {
     try {
-      await axios.delete(`${apiUrl}/${currentTodo._id}`)
+      await apiCall.delete(`/api/todos/${currentTodo._id}`)
+      notifySuccess('Task deleted successfully')
       fetchTodos()
-      closeDeleteModal()
+      setDeleteModalOpen(false)
     } catch (error) {
       console.error('Error deleting task:', error)
     }
   }
 
   return (
-    <div className='bg-gray-700 text-white min-h-screen'>
-      <div className='max-w-4xl mx-auto p-4'>
-        <h1 className='text-3xl font-semibold text-center mb-6'>Todo App</h1>
+    <div className='bg-gray-800 text-white overflow-hidden'>
+      <div className='max-w-[100%] sm:max-w-[95%] mx-auto'>
+        {/* Header and form */}
+        <div
+          className='fixed top-0 left-0 w-full p-4 z-50 shadow-lg bg-gray-900 bg-cover bg-center bg-no-repeat'
+          style={{
+            backgroundImage:
+              "url('https://st4.depositphotos.com/34793116/40976/i/450/depositphotos_409763232-stock-photo-abstract-colorful-texture-background-copy.jpg')"
+          }}
+        >
+          <h1 className='text-3xl font-semibold text-center mb-4 text-white'>
+            Todo App
+          </h1>
+          <form onSubmit={handleAddTodo} className='max-w-md mx-auto'>
+            <div className='grid gap-4'>
+              <input
+                type='text'
+                value={newTodo.text}
+                onChange={e => setNewTodo({ ...newTodo, text: e.target.value })}
+                placeholder='Todo Title'
+                className='p-2 border border-gray-600 bg-black text-white rounded-md'
+                required
+              />
+              <select
+                value={newTodo.priority}
+                onChange={e =>
+                  setNewTodo({ ...newTodo, priority: e.target.value })
+                }
+                className='p-2 border border-gray-600 bg-black text-white rounded-md'
+              >
+                <option value='high'>High</option>
+                <option value='medium'>Medium</option>
+                <option value='low'>Low</option>
+              </select>
+              <input
+                type='date'
+                value={newTodo.deadline}
+                onChange={e =>
+                  setNewTodo({ ...newTodo, deadline: e.target.value })
+                }
+                className='p-2 border border-gray-600 bg-gray-200 text-black rounded-md'
+                required
+              />
+            </div>
+            <button
+              type='submit'
+              className='mt-4 w-full px-4 py-2 bg-indigo-800 text-white rounded-md'
+            >
+              Add Task
+            </button>
+          </form>
+        </div>
 
-        {/* Add Todo Form */}
-        <form onSubmit={handleAddTodo} className='mb-6'>
-          <div className='grid grid-cols-1 gap-4 sm:grid-cols-1'>
+        {/* Todo List */}
+        <div className='mt-[76%] sm:mt-[21%] py-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-transparent h-auto'>
+          {todos.map(todo => (
+            <div key={todo._id}>
+              <p className='text-xs px-2 sm:text-sm text-gray-300'>
+                🔥 Priority:{' '}
+                <span className='font-semibold'>{todo.priority}</span> | 🗓
+                Deadline: {todo.deadline}
+              </p>
+              <div
+                className={`flex items-center justify-between m-2 sm:p-2  rounded-lg shadow-lg shadow-gray-700 backdrop-blur-lg bg-opacity-30 border border-gray-600 ${
+                  todo.complete
+                    ? 'bg-green-800/40 border-green-500'
+                    : 'bg-gray-800/40 border-gray-500'
+                }`}
+              >
+                <div className='flex items-center gap-3 w-full'>
+                  {/* Custom Checkbox */}
+                  <input
+                    type='checkbox'
+                    className='peer hidden'
+                    checked={todo.complete}
+                    onChange={() =>
+                      handleToggleComplete(todo._id, todo.complete)
+                    }
+                    id={`checkbox-${todo._id}`}
+                  />
+                  <label
+                    htmlFor={`checkbox-${todo._id}`}
+                    className='w-6 h-6 flex items-center justify-center border-2 border-gray-300 rounded-md cursor-pointer peer-checked:bg-green-600 peer-checked:border-green-600 transition-all'
+                  >
+                    ✓
+                  </label>
+
+                  <div className='w-full'>
+                    <p
+                      className={`text-base sm:text-xl font-medium ${
+                        todo.complete
+                          ? 'line-through text-gray-400'
+                          : 'text-white'
+                      }`}
+                      title={todo.text} // Tooltip will show the full text on hover
+                    >
+                      {todo.text.length > 15
+                        ? `${todo.text.substring(0, 32)}...`
+                        : todo.text}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Buttons Section */}
+                <div className='flex flex-col sm:flex-row gap-2 items-center'>
+                  <button
+                    onClick={() => {
+                      setCurrentTodo(todo)
+                      setEditModalOpen(true)
+                    }}
+                    className='bg-blue-600 hover:bg-blue-500 text-white px-4 py-1 sm:px-6 sm:py-2 rounded-lg shadow-md transition-all text-xs sm:text-base'
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCurrentTodo(todo)
+                      setDeleteModalOpen(true)
+                    }}
+                    className='bg-red-700 hover:bg-red-500 text-white px-4 py-1 sm:px-6 sm:py-2 rounded-lg shadow-md transition-all text-xs sm:text-base'
+                  >
+                    🗑 Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Edit Todo Modal */}
+      {editModalOpen && currentTodo && (
+        <div className='fixed inset-0 flex  items-center justify-center bg-transparent bg-opacity-50 z-50'>
+          <div className=' bg-gray-600 p-6 grid grid-rows-1 rounded-lg w-11/12 sm:w-1/3'>
+            <h2 className='text-xl font-semibold'>Edit Todo</h2>
             <input
               type='text'
-              name='text'
-              value={newTodo.text}
-              onChange={e => setNewTodo({ ...newTodo, text: e.target.value })}
-              placeholder='Todo Title'
-              className='p-2 border border-gray-600 bg-black text-white rounded-md'
-              required
+              value={currentTodo.text}
+              onChange={e =>
+                setCurrentTodo({ ...currentTodo, text: e.target.value })
+              }
+              className='p-2 border border-gray-600 bg-black text-white rounded-md mb-4'
             />
             <select
-              required
-              name='priority'
-              value={newTodo.priority}
+              value={currentTodo.priority}
               onChange={e =>
-                setNewTodo({ ...newTodo, priority: e.target.value })
+                setCurrentTodo({ ...currentTodo, priority: e.target.value })
               }
-              className='p-2 border border-gray-600 bg-black text-white rounded-md'
+              className='p-2 border border-gray-600 bg-black text-white rounded-md mb-4'
             >
               <option value='high'>High</option>
               <option value='medium'>Medium</option>
@@ -145,203 +231,52 @@ const TodoList = () => {
             </select>
             <input
               type='date'
-              name='deadline'
-              value={newTodo.deadline}
+              value={currentTodo.deadline}
               onChange={e =>
-                setNewTodo({ ...newTodo, deadline: e.target.value })
+                setCurrentTodo({ ...currentTodo, deadline: e.target.value })
               }
-              className='p-2 border border-gray-600 bg-black text-white rounded-md'
-              required
+              className='p-2 border border-gray-600 bg-gray-200 text-black rounded-md mb-4'
             />
+            <button
+              onClick={handleEditTodo}
+              className='w-full px-4 py-2 bg-blue-600 text-white rounded-md'
+            >
+              Save Changes
+            </button>
+            <button
+              onClick={() => setEditModalOpen(false)}
+              className='mt-2 w-full px-4 py-2 bg-gray-500 text-white rounded-md'
+            >
+              Cancel
+            </button>
           </div>
-          <button
-            type='submit'
-            className='mt-4 w-full px-4 py-2 bg-blue-500 text-white rounded-md'
-          >
-            Add Task
-          </button>
-        </form>
-
-        {/* Todo List */}
-        <div>
-          {todos.map(todo => (
-            <div>
-              <div
-                key={todo._id}
-                className={`flex items-center justify-between mb-4 p-4 border rounded-md ${
-                  todo.complete
-                    ? 'bg-green-900 border-green-700'
-                    : 'bg-gray-800 border-gray-700'
-                }`}
-              >
-                <div>
-                  <p
-                    className={`${
-                      todo.complete
-                        ? 'line-through text-sm sm:text-2xl  text-gray-400'
-                        : 'text-white text-sm sm:text-2xl'
-                    }`}
-                  >
-                    <input
-                      type='checkbox'
-                      class='shrink-0 mt-0.5 mx-3 w-5 h-5 border border-gray-200 rounded text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 dark:border-neutral-700 dark:checked:bg-blue-500 dark:checked:border-blue-500 dark:focus:ring-offset-gray-800'
-                      id='hs-vertical-checkbox-in-form'
-                      checked={todo.complete}
-                      onChange={() =>
-                        handleToggleComplete(todo._id, todo.complete)
-                      }
-                    />
-                    {todo.text}
-                  </p>
-                  <p className='text-sm ml-3 text-gray-200'>
-                    Priority: {todo.priority} - {todo.deadline}
-                  </p>
-                </div>
-                <div className='flex gap-2 flex-col sm:flex-row items-center'>
-                  <button
-                    onClick={() => openEditModal(todo)}
-                    className='bg-yellow-500 text-white px-5 py-1 rounded-md mr-2'
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => openDeleteModal(todo)}
-                    className='bg-red-500 text-white px-3 py-1 rounded-md'
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
+      )}
 
-        {/* Edit Modal */}
-        {editModalOpen && currentTodo && (
-          <div className='fixed inset-0 flex items-center justify-center z-50 bg-transparent bg-opacity-80'>
-            <div className='bg-gray-800 p-6 rounded-lg shadow-lg w-96'>
-              <h2 className='text-xl font-semibold mb-4 text-white'>
-                Edit Task
-              </h2>
-              <form onSubmit={handleUpdateTodo}>
-                <div className='mb-4'>
-                  <label className='block text-sm font-medium mb-2 text-white'>
-                    Task Description
-                  </label>
-                  <input
-                    type='text'
-                    value={currentTodo.text}
-                    onChange={e =>
-                      setCurrentTodo({ ...currentTodo, text: e.target.value })
-                    }
-                    className='w-full p-2 border border-gray-600 bg-black text-white rounded-md'
-                    required
-                  />
-                </div>
-                <div className='mb-4'>
-                  <label className='block text-sm font-medium mb-2 text-white'>
-                    Priority
-                  </label>
-                  <select
-                    value={currentTodo.priority}
-                    onChange={e =>
-                      setCurrentTodo({
-                        ...currentTodo,
-                        priority: e.target.value
-                      })
-                    }
-                    className='w-full p-2 border border-gray-600 bg-black text-white rounded-md'
-                  >
-                    <option value='high'>High</option>
-                    <option value='medium'>Medium</option>
-                    <option value='low'>Low</option>
-                  </select>
-                </div>
-                <div className='mb-4'>
-                  <label className='block text-sm font-medium mb-2 text-white'>
-                    Deadline
-                  </label>
-                  <input
-                    type='date'
-                    value={currentTodo.deadline}
-                    onChange={e =>
-                      setCurrentTodo({
-                        ...currentTodo,
-                        deadline: e.target.value
-                      })
-                    }
-                    className='w-full p-2 border border-gray-600 bg-black text-white rounded-md'
-                    required
-                  />
-                </div>
-                <div className='mb-4'>
-                  <label className='block text-sm font-medium mb-2 text-white'>
-                    Completed
-                  </label>
-                  <input
-                    type='checkbox'
-                    checked={currentTodo.complete}
-                    onChange={e =>
-                      setCurrentTodo({
-                        ...currentTodo,
-                        complete: e.target.checked
-                      })
-                    }
-                    className='mr-2'
-                  />
-                  <span>
-                    {currentTodo.complete ? 'Completed' : 'Incomplete'}
-                  </span>
-                </div>
-                <div className='flex justify-end'>
-                  <button
-                    type='button'
-                    onClick={closeEditModal}
-                    className='px-4 py-2 bg-gray-700 text-white rounded-md mr-2'
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type='submit'
-                    className='px-4 py-2 bg-blue-500 text-white rounded-md'
-                  >
-                    Update
-                  </button>
-                </div>
-              </form>
-            </div>
+      {/* Delete Todo Modal */}
+      {deleteModalOpen && currentTodo && (
+        <div className='fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 z-50'>
+          <div className='p-6 bg-black rounded-lg w-11/12 sm:w-1/3'>
+            <h2 className='text-xl font-semibold'>Delete Todo</h2>
+            <p>Are you sure you want to delete this todo item?</p>
+            <p>
+              <strong>{currentTodo.text}</strong>
+            </p>
+            <button
+              onClick={handleDeleteTodo}
+              className='mt-4 w-full px-4 py-2 bg-red-700 text-white rounded-md'
+            >
+              Yes, Delete
+            </button>
+            <button
+              onClick={() => setDeleteModalOpen(false)}
+              className='mt-2 w-full px-4 py-2 bg-gray-500 text-white rounded-md'
+            >
+              Cancel
+            </button>
           </div>
-        )}
-
-        {/* Delete Modal */}
-        {deleteModalOpen && currentTodo && (
-          <div className='fixed inset-0 flex items-center justify-center z-50 bg-transparent bg-opacity-80'>
-            <div className='bg-gray-800 p-6 rounded-lg shadow-lg w-96'>
-              <h2 className='text-xl font-semibold mb-4 text-white'>
-                Delete Task
-              </h2>
-              <p className='mb-4 text-white'>
-                Are you sure you want to delete the task:{' '}
-                <strong>{currentTodo.text}</strong>?
-              </p>
-              <div className='flex justify-end'>
-                <button
-                  onClick={closeDeleteModal}
-                  className='px-4 py-2 bg-gray-700 text-white rounded-md mr-2'
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDeleteTodo}
-                  className='px-4 py-2 bg-red-500 text-white rounded-md'
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
