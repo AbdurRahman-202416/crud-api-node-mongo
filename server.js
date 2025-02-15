@@ -1,16 +1,21 @@
 import express from 'express'
+import cors from 'cors'
 import dotenv from 'dotenv'
 import connectDB from './Database/db.js'
 import TODO from './models/todo.models.js'
+
 dotenv.config()
 const app = express()
+
 const PORT = process.env.PORT || 4000
 
 // middleware
+app.use(cors()) 
 app.use(express.json())
+
 connectDB()
 
-//todo Api's
+// Todo API's
 app.get('/', (req, res) => {
   res.send(`
     <html lang="en">
@@ -62,96 +67,110 @@ app.get('/', (req, res) => {
   `)
 })
 
+// GET all todos
 app.get('/api/todos', async (req, res) => {
   try {
     const result = await TODO.find()
     res.send({
       success: true,
-      massage: 'Data fetch successfully',
+      message: 'Data fetched successfully',
       data: result
     })
   } catch (error) {
     res.send({
       success: false,
-      massage: 'Data fetch failed',
+      message: 'Data fetch failed',
       error: error.message
     })
   }
 })
 
+// POST a new todo
 app.post('/api/todos', async (req, res) => {
   try {
     const todoDetails = req.body
     const result = await TODO.create(todoDetails)
     res.send({
       success: true,
-      massage: 'Todo added successfully',
+      message: 'Todo added successfully',
       data: result
     })
   } catch (error) {
     res.send({
       success: false,
-      massage: 'Todo added failed',
-      error: error.message,
-      data: result
+      message: 'Todo add failed',
+      error: error.message // Removed 'data: result' to avoid undefined variable
     })
   }
 })
 
+// GET a specific todo by ID
 app.get('/api/todos/:id', async (req, res) => {
   try {
     const id = req.params.id
     const result = await TODO.findById(id)
     res.send({
       success: true,
-      massage: 'Todo fetch successfully',
+      message: 'Todo fetched successfully',
       data: result
     })
   } catch (error) {
     res.send({
       success: false,
-      massage: 'Todo fetch failed',
+      message: 'Todo fetch failed',
       error: error.message
     })
   }
 })
 
+// PATCH (update) a todo by ID
 app.patch('/api/todos/:id', async (req, res) => {
   try {
     const id = req.params.id
     const todoDetails = req.body
-    const result = await TODO.findByIdAndUpdate(id, todoDetails)
+    const result = await TODO.findByIdAndUpdate(id, todoDetails, { new: true })
     res.send({
       success: true,
-      massage: 'Todo updated successfully',
+      message: 'Todo updated successfully',
       data: result
     })
   } catch (error) {
     res.send({
       success: false,
-      massage: 'Todo updated failed',
+      message: 'Todo update failed',
       error: error.message
     })
   }
 })
 
+// DELETE a todo by ID
 app.delete('/api/todos/:id', async (req, res) => {
   try {
     const id = req.params.id
     const result = await TODO.findByIdAndDelete(id)
     res.send({
       success: true,
-      massage: 'Todo deleted successfully',
+      message: 'Todo deleted successfully',
       data: null
     })
   } catch (error) {
     res.send({
       success: false,
-      massage: 'Todo deleted failed',
+      message: 'Todo delete failed',
       error: error.message,
       data: null
     })
   }
+})
+
+// Global error handler (optional)
+app.use((err, req, res, next) => {
+  console.error(err.stack)
+  res.status(500).send({
+    success: false,
+    message: 'Something went wrong!',
+    error: err.message
+  })
 })
 
 app.listen(PORT, () => {
