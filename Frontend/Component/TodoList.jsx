@@ -179,7 +179,7 @@ const TodoList = () => {
                     className={`${
                       todo.complete
                         ? 'line-through text-2xl text-gray-400'
-                        : 'text-white'
+                        : 'text-white text-2xl'
                     }`}
                   >
                     <input
