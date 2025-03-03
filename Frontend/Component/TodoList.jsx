@@ -75,80 +75,68 @@ const TodoList = () => {
   }
 
   return (
-    <div className='bg-gray-800 text-white overflow-hidden'>
-      <div className='max-w-[100%] sm:max-w-[95%] mx-auto'>
-        {/* Header and form */}
-        <div
-          className='fixed top-0 left-0 w-full p-4 z-50 shadow-lg bg-gray-900 bg-cover bg-center bg-no-repeat'
-          style={{
-            backgroundImage:
-              "url('https://st4.depositphotos.com/34793116/40976/i/450/depositphotos_409763232-stock-photo-abstract-colorful-texture-background-copy.jpg')"
-          }}
-        >
-          <h1 className='text-3xl font-semibold text-center mb-4 text-white'>
+    <div className='bg-gray-950 text-white min-h-screen font-sans'>
+      <div className='max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8'>
+        {/* Header */}
+        <header className='relative py-8 bg-gradient-to-r from-indigo-900 to-purple-900 rounded-b-3xl shadow-lg'>
+          <h1 className='text-4xl sm:text-5xl font-bold text-center text-white mb-6'>
             Todo App
           </h1>
-          <form onSubmit={handleAddTodo} className='max-w-md mx-auto'>
-            <div className='grid gap-4'>
-              <input
-                type='text'
-                value={newTodo.text}
-                onChange={e => setNewTodo({ ...newTodo, text: e.target.value })}
-                placeholder='Todo Title'
-                className='p-2 border border-gray-600 bg-black text-white rounded-md'
-                required
-              />
-              <select
-                value={newTodo.priority}
-                onChange={e =>
-                  setNewTodo({ ...newTodo, priority: e.target.value })
-                }
-                className='p-2 border border-gray-600 bg-black text-white rounded-md'
-              >
-                <option value='high'>High</option>
-                <option value='medium'>Medium</option>
-                <option value='low'>Low</option>
-              </select>
-              <input
-                type='date'
-                value={newTodo.deadline}
-                onChange={e =>
-                  setNewTodo({ ...newTodo, deadline: e.target.value })
-                }
-                className='p-2 border border-gray-600 bg-gray-200 text-black rounded-md'
-                required
-              />
-            </div>
+          <form onSubmit={handleAddTodo} className='max-w-md mx-auto space-y-4'>
+            <input
+              type='text'
+              value={newTodo.text}
+              onChange={e => setNewTodo({ ...newTodo, text: e.target.value })}
+              placeholder='Enter Task Title'
+              className='w-full p-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-indigo-500 transition-colors'
+              required
+            />
+            <select
+              value={newTodo.priority}
+              onChange={e =>
+                setNewTodo({ ...newTodo, priority: e.target.value })
+              }
+              className='w-full p-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-indigo-500 transition-colors'
+            >
+              <option value='high'>High Priority</option>
+              <option value='medium'>Medium Priority</option>
+              <option value='low'>Low Priority</option>
+            </select>
+            <input
+              type='date'
+              value={newTodo.deadline}
+              onChange={e =>
+                setNewTodo({ ...newTodo, deadline: e.target.value })
+              }
+              className='w-full p-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-indigo-500 transition-colors'
+              required
+            />
             <button
               type='submit'
-              className='mt-4 w-full px-4 py-2 bg-indigo-800 text-white rounded-md'
+              className='w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-md transition-all'
             >
               Add Task
             </button>
           </form>
-        </div>
+        </header>
 
         {/* Todo List */}
-        <div className='mt-[76%] sm:mt-[21%] py-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-transparent h-auto'>
+        <section className='mt-8 space-y-4'>
           {todos.map(todo => (
-            <div key={todo._id}>
-              <p className='text-xs px-2 sm:text-sm text-gray-300'>
-                🔥 Priority:{' '}
-                <span className='font-semibold'>{todo.priority}</span> | 🗓
-                Deadline: {todo.deadline}
-              </p>
-              <div
-                className={`flex items-center justify-between m-2 sm:p-2  rounded-lg shadow-lg shadow-gray-700 backdrop-blur-lg bg-opacity-30 border border-gray-600 ${
-                  todo.complete
-                    ? 'bg-green-800/40 border-green-500'
-                    : 'bg-gray-800/40 border-gray-500'
-                }`}
-              >
-                <div className='flex items-center gap-3 w-full'>
-                  {/* Custom Checkbox */}
+            <div
+              key={todo._id}
+              className={`p-4 rounded-lg shadow-md transition-shadow ${
+                todo.complete
+                  ? 'bg-green-900/20 border-green-500'
+                  : 'bg-gray-800/20 border-gray-700'
+              }`}
+            >
+              <div className='flex items-center justify-between'>
+                {/* Task Details */}
+                <div className='flex items-center gap-4 w-full'>
                   <input
                     type='checkbox'
-                    className='peer hidden'
+                    className='hidden peer'
                     checked={todo.complete}
                     onChange={() =>
                       handleToggleComplete(todo._id, todo.complete)
@@ -157,77 +145,79 @@ const TodoList = () => {
                   />
                   <label
                     htmlFor={`checkbox-${todo._id}`}
-                    className='w-6 h-6 flex items-center justify-center border-2 border-gray-300 rounded-md cursor-pointer peer-checked:bg-green-600 peer-checked:border-green-600 transition-all'
+                    className='w-6 h-6 flex items-center justify-center border-2 border-gray-400 rounded-md cursor-pointer peer-checked:bg-green-500 peer-checked:border-green-500 transition-all'
                   >
                     ✓
                   </label>
-
                   <div className='w-full'>
                     <p
-                      className={`text-base sm:text-xl font-medium ${
+                      className={`text-base sm:text-lg font-medium ${
                         todo.complete
                           ? 'line-through text-gray-400'
                           : 'text-white'
                       }`}
-                      title={todo.text} // Tooltip will show the full text on hover
+                      title={todo.text}
                     >
-                      {todo.text.length > 15
-                        ? `${todo.text.substring(0, 32)}...`
+                      {todo.text.length > 30
+                        ? `${todo.text.substring(0, 30)}...`
                         : todo.text}
+                    </p>
+                    <p className='text-xs text-gray-400 mt-1'>
+                      🔥 Priority: {todo.priority} | 🗓 Deadline: {todo.deadline}
                     </p>
                   </div>
                 </div>
 
-                {/* Buttons Section */}
-                <div className='flex flex-col sm:flex-row gap-2 items-center'>
+                {/* Buttons */}
+                <div className='flex gap-2'>
                   <button
                     onClick={() => {
                       setCurrentTodo(todo)
                       setEditModalOpen(true)
                     }}
-                    className='bg-blue-600 hover:bg-blue-500 text-white px-4 py-1 sm:px-6 sm:py-2 rounded-lg shadow-md transition-all text-xs sm:text-base'
+                    className='p-2 px-5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-all'
                   >
-                    ✏️ Edit
+                     Edit
                   </button>
                   <button
                     onClick={() => {
                       setCurrentTodo(todo)
                       setDeleteModalOpen(true)
                     }}
-                    className='bg-red-700 hover:bg-red-500 text-white px-4 py-1 sm:px-6 sm:py-2 rounded-lg shadow-md transition-all text-xs sm:text-base'
+                    className='p-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-all'
                   >
-                    🗑 Delete
+                     Delete
                   </button>
                 </div>
               </div>
             </div>
           ))}
-        </div>
+        </section>
       </div>
 
-      {/* Edit Todo Modal */}
+      {/* Edit Modal */}
       {editModalOpen && currentTodo && (
-        <div className='fixed inset-0 flex  items-center justify-center bg-transparent bg-opacity-50 z-50'>
-          <div className=' bg-gray-600 p-6 grid grid-rows-1 rounded-lg w-11/12 sm:w-1/3'>
-            <h2 className='text-xl font-semibold'>Edit Todo</h2>
+        <div className='fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50'>
+          <div className='bg-gray-800 p-6 rounded-lg w-full max-w-md'>
+            <h2 className='text-2xl font-bold mb-4'>Edit Todo</h2>
             <input
               type='text'
               value={currentTodo.text}
               onChange={e =>
                 setCurrentTodo({ ...currentTodo, text: e.target.value })
               }
-              className='p-2 border border-gray-600 bg-black text-white rounded-md mb-4'
+              className='w-full p-3 bg-gray-700 border border-gray-600 rounded-lg mb-4 focus:outline-none focus:border-indigo-500 transition-colors'
             />
             <select
               value={currentTodo.priority}
               onChange={e =>
                 setCurrentTodo({ ...currentTodo, priority: e.target.value })
               }
-              className='p-2 border border-gray-600 bg-black text-white rounded-md mb-4'
+              className='w-full p-3 bg-gray-700 border border-gray-600 rounded-lg mb-4 focus:outline-none focus:border-indigo-500 transition-colors'
             >
-              <option value='high'>High</option>
-              <option value='medium'>Medium</option>
-              <option value='low'>Low</option>
+              <option value='high'>High Priority</option>
+              <option value='medium'>Medium Priority</option>
+              <option value='low'>Low Priority</option>
             </select>
             <input
               type='date'
@@ -235,45 +225,50 @@ const TodoList = () => {
               onChange={e =>
                 setCurrentTodo({ ...currentTodo, deadline: e.target.value })
               }
-              className='p-2 border border-gray-600 bg-gray-200 text-black rounded-md mb-4'
+              className='w-full p-3 bg-gray-700 border border-gray-600 rounded-lg mb-4 focus:outline-none focus:border-indigo-500 transition-colors'
             />
-            <button
-              onClick={handleEditTodo}
-              className='w-full px-4 py-2 bg-blue-600 text-white rounded-md'
-            >
-              Save Changes
-            </button>
-            <button
-              onClick={() => setEditModalOpen(false)}
-              className='mt-2 w-full px-4 py-2 bg-gray-500 text-white rounded-md'
-            >
-              Cancel
-            </button>
+            <div className='flex justify-end gap-2'>
+              <button
+                onClick={handleEditTodo}
+                className='px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition-all'
+              >
+                Save Changes
+              </button>
+              <button
+                onClick={() => setEditModalOpen(false)}
+                className='px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-all'
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Delete Todo Modal */}
+      {/* Delete Modal */}
       {deleteModalOpen && currentTodo && (
-        <div className='fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 z-50'>
-          <div className='p-6 bg-black rounded-lg w-11/12 sm:w-1/3'>
-            <h2 className='text-xl font-semibold'>Delete Todo</h2>
-            <p>Are you sure you want to delete this todo item?</p>
-            <p>
+        <div className='fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50'>
+          <div className='bg-gray-800 p-6 rounded-lg w-full max-w-md'>
+            <h2 className='text-2xl font-bold mb-4'>Delete Todo</h2>
+            <p className='mb-4'>
+              Are you sure you want to delete this task?
+              <br />
               <strong>{currentTodo.text}</strong>
             </p>
-            <button
-              onClick={handleDeleteTodo}
-              className='mt-4 w-full px-4 py-2 bg-red-700 text-white rounded-md'
-            >
-              Yes, Delete
-            </button>
-            <button
-              onClick={() => setDeleteModalOpen(false)}
-              className='mt-2 w-full px-4 py-2 bg-gray-500 text-white rounded-md'
-            >
-              Cancel
-            </button>
+            <div className='flex justify-end gap-2'>
+              <button
+                onClick={handleDeleteTodo}
+                className='px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-all'
+              >
+                Yes, Delete
+              </button>
+              <button
+                onClick={() => setDeleteModalOpen(false)}
+                className='px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-all'
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
